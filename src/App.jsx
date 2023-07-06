@@ -19,8 +19,16 @@ const productsWithUsers = products.map(product => ({
     && user.id === product.category.ownerId) || null,
 }));
 
-function getPreparedProducts(prods, selectedUserId) {
+function getPreparedProducts(prods, selectedUserId, query) {
   let preparedProducts = [...prods];
+
+  if (query) {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    preparedProducts = preparedProducts.filter(
+      prod => prod.name.toLowerCase().includes(normalizedQuery),
+    );
+  }
 
   if (selectedUserId) {
     preparedProducts = preparedProducts.filter(
@@ -123,8 +131,18 @@ export const Table = ({ prepPdoducts }) => (
 
 export const App = () => {
   const [selectedUser, setSelectedUser] = useState('');
+  const [query, setQuery] = useState('');
 
-  const preparedProducts = getPreparedProducts(productsWithUsers, selectedUser);
+  function reset() {
+    selectedUser('');
+    setQuery('');
+  }
+
+  const preparedProducts = getPreparedProducts(
+    productsWithUsers,
+    selectedUser,
+    query,
+  );
 
   return (
     <div className="section">
@@ -169,21 +187,25 @@ export const App = () => {
                   type="text"
                   className="input"
                   placeholder="Search"
-                  value="qwe"
+                  value={query}
+                  onChange={event => setQuery(event.target.value)}
                 />
 
                 <span className="icon is-left">
                   <i className="fas fa-search" aria-hidden="true" />
                 </span>
 
-                <span className="icon is-right">
-                  {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
-                  <button
-                    data-cy="ClearButton"
-                    type="button"
-                    className="delete"
-                  />
-                </span>
+                {query && (
+                  <span className="icon is-right">
+                    {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
+                    <button
+                      data-cy="ClearButton"
+                      type="button"
+                      className="delete"
+                      onClick={() => setQuery('')}
+                    />
+                  </span>
+                )}
               </p>
             </div>
 
@@ -233,6 +255,7 @@ export const App = () => {
                 data-cy="ResetAllButton"
                 href="#/"
                 className="button is-link is-outlined is-fullwidth"
+                onClick={reset}
               >
                 Reset all filters
               </a>
@@ -240,7 +263,11 @@ export const App = () => {
           </nav>
         </div>
 
-        <Table prepPdoducts={preparedProducts} />
+        {preparedProducts.length ? (
+          <Table prepPdoducts={preparedProducts} />
+        ) : (
+          <p>No results</p>
+        )}
       </div>
     </div>
   );
